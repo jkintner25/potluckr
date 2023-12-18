@@ -30,7 +30,7 @@ export default function CreatePotluckForm() {
         <input className="text-black px-2 text-lg" value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
       <div className="my-6">
-        <p className="text-xl">Choose a theme (or leave blank!)</p>
+        <p className="text-xl">Choose a theme (or don&apos;t!)</p>
         <input className="text-black px-2 text-lg" value={theme} onChange={(e) => setTheme(e.target.value)} />
       </div>
       <div className="my-6">
