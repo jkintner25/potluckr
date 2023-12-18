@@ -33,7 +33,7 @@ export default function CreatePotluckForm() {
       </div>
       <div className="my-6">
         <p className="text-xl">When is this shindig?</p>
-        <input type="datetime" className="text-black px-2 text-lg" value={date} onChange={(e) => setDate(e.target.value)} />
+        <input type="datetime-local" className="text-black px-2 text-lg" value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
       <div className="flex justify-center m-6">
         <button className="px-3 py-2 bg-white rounded-lg text-black" onClick={createEvent}>Create</button>
