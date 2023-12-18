@@ -16,12 +16,18 @@ export default function PotluckPage({ id }: { id: string }) {
 
   const getEvent = async () => {
     let response = await fetch(`api/${id}`);
-    let data = await response.json();
+    let res = await response.json();
     if (response.ok) {
-      setEventData(data.data)
-    } else {
-      setEventError(data.error)
+      let { data } = res;
+      if (data !== null) {
+        setEventData(data)
+      } else {
+        router.push("/not-found")
+      }
       console.log(data)
+    } else {
+      setEventError(res.error)
+      console.log(res)
     }
   };
 
@@ -60,7 +66,7 @@ export default function PotluckPage({ id }: { id: string }) {
     let data = await res.json();
     if (res.ok) getEvent();
   }
-  
+
   const deleteDish = async (dish: DishEntry) => {
     let res = await fetch(`api/${id}`, {
       method: 'DELETE',
@@ -81,7 +87,16 @@ export default function PotluckPage({ id }: { id: string }) {
         <>
           {eventData !== null ? (
             <>
-              <p className="text-3xl my-2">{eventData.title}</p>
+              <div className="w-full flex px-8 mb-6">
+                <div className="flex rounded border px-2 py-1">
+                  <p className="text-sm mr-4 text-red-500">Attention!!!</p>
+                  <p className="text-sm text-justify">The url is how you will access this event so make sure to copy it.</p>
+                </div>
+              </div>
+              <p className="text-3xl mt-2">{eventData.title}</p>
+              {eventData?.theme ? (
+                <p className="my-1">Theme: <i>{eventData.theme}</i></p>
+              ) : null}
               <p className="text-sm">{dayjs(eventData.datetime).format('dddd D/M/YY h:mma')}</p>
             </>
           ) : null}

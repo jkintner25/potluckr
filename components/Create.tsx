@@ -10,6 +10,8 @@ export default function CreatePotluckForm() {
   const [theme, setTheme] = useState("");
   const [date, setDate] = useState("");
 
+  console.log(date)
+
   const createEvent = async () => {
     let res = await fetch(`/api/newEvent?title=${title}&theme=${theme}&date=${dayjs(date).format('M/D/YYYY hh:mm a')}`);
     let data = await res.json();
