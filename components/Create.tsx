@@ -13,7 +13,7 @@ export default function CreatePotluckForm() {
   const createEvent = async () => {
     let newEvent = JSON.stringify({ title: title, theme: theme, datetime: date })
     console.log(newEvent)
-    let res = await fetch(`/api/newEvent`, {
+    let res = await fetch(`api/newEvent`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: newEvent
