@@ -13,6 +13,9 @@ export default function PotluckPage({ id }: { id: string }) {
   const [newDishType, setNewDishType] = useState<string>("Main");
   const [newDishName, setNewDishName] = useState<string>("");
   const [newDishPerson, setNewDishPerson] = useState<string>("");
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [disabled, setDisabled] = useState(false);
+  const [loop, setLoop] = useState(false);
 
   const getEvent = async () => {
     let response = await fetch(`api/${id}`);
@@ -24,7 +27,6 @@ export default function PotluckPage({ id }: { id: string }) {
       } else {
         router.push("/not-found")
       }
-      console.log(data)
     } else {
       setEventError(res.error)
       console.log(res)
@@ -32,15 +34,55 @@ export default function PotluckPage({ id }: { id: string }) {
   };
 
   useEffect(() => {
+    if (!loop) {
+      let timer = setTimeout(() => {
+        setLoop(!loop)
+      }, 6000);
+      return () => clearTimeout(timer)
+    } else {
+      let timer = setTimeout(() => {
+        setLoop(!loop)
+      }, 500);
+      return () => clearTimeout(timer)
+    }
+  }, [loop])
+
+  useEffect(() => {
     setLoading(true)
     getEvent();
     let loaded = setTimeout(() => {
       setLoading(false)
-    }, 2000)
+    }, 1500)
     return () => clearTimeout(loaded)
   }, [])
 
+  useEffect(() => {
+    if (newDishName.length && formErrors.includes("Dish")) {
+      setFormErrors(prev => prev.filter(a => a != "Dish"));
+    }
+    if (newDishPerson.length && formErrors.includes("Name")) {
+      setFormErrors(prev => prev.filter(a => a != "Name"));
+    }
+  }, [newDishName, newDishPerson])
+
+  useEffect(() => {
+    if (!formErrors.length) setDisabled(false)
+  }, [formErrors])
+
+  const checkErrors = () => {
+    let errors: string[] = [];
+    if (newDishName.length < 1) errors.push("Dish");
+    if (newDishPerson.length < 1) errors.push("Name");
+    return errors;
+  };
+
   const submitNewDish = async () => {
+    let myErrors = checkErrors();
+    if (myErrors.length) {
+      setFormErrors(myErrors)
+      setDisabled(true)
+      return;
+    }
     let dishType;
     if (newDishType === "Main") {
       dishType = "mains"
@@ -88,22 +130,28 @@ export default function PotluckPage({ id }: { id: string }) {
           {eventData !== null ? (
             <>
               <div className="w-full flex px-8 mb-6">
-                <div className="flex rounded border px-2 py-1">
+                <div className={`flex rounded border border-stone-200 bg-stone-700 px-2 py-1 transition-opacity ease-out duration-500 ${loop ? 'opacity-60' : 'opacity-100'}`}>
                   <p className="text-sm mr-4 text-red-500">Attention!!!</p>
                   <p className="text-sm text-justify">The url is how you will access this event so make sure to copy it.</p>
                 </div>
               </div>
-              <p className="text-3xl mt-2">{eventData.title}</p>
-              {eventData?.theme ? (
-                <p className="my-1">Theme: <i>{eventData.theme}</i></p>
-              ) : null}
+              <p className="text-3xl mb-4">{eventData.title}</p>
               <p className="text-sm">{dayjs(eventData.datetime).format('dddd D/M/YY h:mma')}</p>
+              {eventData?.address ? (
+                <p className="text-sm md:text-md">Venue: <i>{eventData.address}</i></p>
+              ) : null}
+              {eventData?.theme ? (
+                <p className="text-sm md:text-md">Theme: <i>{eventData.theme}</i></p>
+              ) : null}
+              {eventData?.instructions ? (
+                <p className="text-sm md:text-md mt-4">*Instructions: <i>{eventData.instructions}</i></p>
+              ) : null}
             </>
           ) : null}
           {eventError !== null ? (
             <p className="">{eventError}</p>
           ) : null}
-          <div className="w-screen max-w-[500px] flex flex-col px-4 mt-6">
+          <div className="w-screen max-w-[500px] flex flex-col px-4 mt-4">
             <p className="text-xl mb-2">
               Menu
             </p>
@@ -179,27 +227,36 @@ export default function PotluckPage({ id }: { id: string }) {
                 ) : null}
               </tbody>
             </table>
-            <div className="mt-12 flex flex-col">
-              <p className="text-2xl mb-4">What are you bringing?</p>
-              <div className="flex flex-col">
-                <div className="flex text-lg my-1">
-                  <label className="w-3/12">Type</label>
-                  <select className="rounded text-black" value={newDishType} onChange={(e) => setNewDishType(e.target.value)}>
+            <div className="mt-12 flex flex-col w-full items-center">
+              <p className="text-2xl mb-4 w-10/12">What are you bringing?</p>
+              <div className="flex flex-col items-center w-full">
+                <div className="flex text-lg my-1 w-10/12">
+                  <label className="w-2/12">Type</label>
+                  <select className="rounded text-black w-10/12" value={newDishType} onChange={(e) => setNewDishType(e.target.value)}>
                     {dishTypes.map(type => {
                       return <option key={type} value={type} className="text-black">{type}</option>
                     })}
                   </select>
                 </div>
-                <div className="flex text-lg my-1">
-                  <label className="w-3/12">Dish</label>
-                  <input value={newDishName} onChange={(e) => setNewDishName(e.target.value)} className="rounded w-7/12 pl-2 text-black" />
+                <div className="flex text-lg my-1 w-10/12">
+                  <label className="w-2/12">Dish</label>
+                  <input value={newDishName} onChange={(e) => setNewDishName(e.target.value)} className="rounded w-10/12 pl-2 text-black" />
                 </div>
-                <div className="flex text-lg my-1">
-                  <label className="w-3/12">Name</label>
-                  <input value={newDishPerson} onChange={(e) => setNewDishPerson(e.target.value)} className="rounded w-7/12 pl-2 text-black" />
+                <div className="flex text-lg my-1 w-10/12">
+                  <label className="w-2/12">Name</label>
+                  <input value={newDishPerson} onChange={(e) => setNewDishPerson(e.target.value)} className="rounded w-10/12 pl-2 text-black" />
                 </div>
+                {formErrors.length ? (
+                  <div className="w-full flex justify-center mt-2">
+                    <p className="text-yellow-400">
+                      <i>
+                        You need a {formErrors[0]}{formErrors.length > 1 ? ` and a ${formErrors[1]}!` : "!"}
+                      </i>
+                    </p>
+                  </div>
+                ) : null}
                 <div className="w-full flex justify-center">
-                  <button onClick={submitNewDish} className="py-2 px-6 rounded my-8 bg-green-500 text-black">Submit</button>
+                  <button onClick={submitNewDish} className={`px-4 py-2 bg-white rounded-lg text-black border shadow-md disabled:opacity-50 ${disabled ? "mt-4" : "mt-12"}`} disabled={disabled}>Submit</button>
                 </div>
               </div>
             </div>

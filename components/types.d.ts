@@ -4,6 +4,8 @@ export interface Event {
   title: string;
   datetime: string;
   theme?: string;
+  address?: string;
+  instructions?: string;
   mains?: {
     name: string;
     dish: string;

@@ -25,8 +25,6 @@ export async function POST(req: NextRequest) {
 
   const { type, dish, name } = await req.json()
 
-  console.log(type, dish, name)
-
   try {
     await client.connect();
     const db = client.db("PotluckrDB");
@@ -45,8 +43,6 @@ export async function DELETE(req: NextRequest) {
   const id = new ObjectId(requestUrl.pathname.slice(5))
 
   const { type, dish, name } = await req.json()
-
-  console.log(type, dish, name)
 
   try {
     await client.connect();

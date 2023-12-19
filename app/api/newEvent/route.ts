@@ -2,19 +2,15 @@ import { client } from "@/app/mongoClient";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  console.log('HIT api/newEvent')
   const body = await req.json()
-  const { title, theme, datetime } = body;
-  console.log(title, theme, datetime);
+  const { title, theme, datetime, address, instructions } = body;
 
   try {
     await client.connect();
     const db = client.db("PotluckrDB");
     const collection = db.collection("Events");
-    console.log(db, collection)
-    const document = { title: title, theme: theme, datetime: datetime };
+    const document = { title: title, theme: theme, datetime: datetime, address: address, instructions: instructions };
     const result = await collection.insertOne(document);
-    console.log(result)
     return NextResponse.json({ id: result.insertedId }, { status: 200 })
   } catch (e) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
