@@ -9,8 +9,10 @@ export async function POST(req: NextRequest) {
     await client.connect();
     const db = client.db("PotluckrDB");
     const collection = db.collection("Events");
+    console.log(db, collection)
     const document = { title: title, theme: theme, datetime: datetime };
     const result = await collection.insertOne(document);
+    console.log(result)
     return NextResponse.json({ id: result.insertedId }, { status: 200 })
   } catch (e) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
