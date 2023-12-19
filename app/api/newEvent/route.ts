@@ -1,11 +1,9 @@
 import { client } from "@/app/mongoClient";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
-  const requestUrl = new URL(req.url)
-  let title = requestUrl.searchParams.get('title');
-  let theme = requestUrl.searchParams.get('theme');
-  let datetime = requestUrl.searchParams.get('date');
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { title, theme, datetime } = body;
 
   try {
     await client.connect();
