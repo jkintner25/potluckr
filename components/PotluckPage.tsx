@@ -172,7 +172,9 @@ export default function PotluckPage({ id }: { id: string }) {
                       <td className="basis-2/5 border-r">{obj.dish}</td>
                       <td className="basis-2/5 border-r">{obj.name}</td>
                       <td className="basis-1/6 flex justify-center">
-                        <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "mains" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        <div className="flex justify-center items-center">
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "mains" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        </div>
                       </td>
                     </tr>
                   })
@@ -184,7 +186,9 @@ export default function PotluckPage({ id }: { id: string }) {
                       <td className="basis-2/5 border-r">{obj.dish}</td>
                       <td className="basis-2/5 border-r">{obj.name}</td>
                       <td className="basis-1/6 flex justify-center">
-                        <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "sides" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        <div className="flex justify-center items-center">
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "sides" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        </div>
                       </td>
                     </tr>
                   })
@@ -196,7 +200,9 @@ export default function PotluckPage({ id }: { id: string }) {
                       <td className="basis-2/5 border-r">{obj.dish}</td>
                       <td className="basis-2/5 border-r">{obj.name}</td>
                       <td className="basis-1/6 flex justify-center">
-                        <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "desserts" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        <div className="flex justify-center items-center">
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "desserts" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        </div>
                       </td>
                     </tr>
                   })
@@ -208,7 +214,9 @@ export default function PotluckPage({ id }: { id: string }) {
                       <td className="basis-2/5 border-r">{obj.dish}</td>
                       <td className="basis-2/5 border-r">{obj.name}</td>
                       <td className="basis-1/6 flex justify-center">
-                        <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "drinks" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        <div className="flex justify-center items-center">
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "drinks" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        </div>
                       </td>
                     </tr>
                   })
@@ -220,7 +228,9 @@ export default function PotluckPage({ id }: { id: string }) {
                       <td className="basis-2/5 border-r">{obj.dish}</td>
                       <td className="basis-2/5 border-r">{obj.name}</td>
                       <td className="basis-1/6 flex justify-center">
-                        <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "misc" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        <div className="flex justify-center items-center">
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "misc" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                        </div>
                       </td>
                     </tr>
                   })
