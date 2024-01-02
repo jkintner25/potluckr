@@ -157,7 +157,7 @@ export default function PotluckPage({ id }: { id: string }) {
         <>
           {eventData !== null ? (
             <>
-              <div className="w-full flex px-8 mb-6">
+              <div className="w-full flex justify-center px-8 mb-6">
                 <div className={`flex rounded border border-stone-200 bg-stone-700 px-2 py-1 transition-opacity ease-out duration-500 ${loop ? 'opacity-60' : 'opacity-100'}`}>
                   <p className="text-sm mr-4 text-red-500">Attention!!!</p>
                   <p className="text-sm text-justify">The url is how you will access this event so make sure to copy it.</p>
@@ -179,11 +179,11 @@ export default function PotluckPage({ id }: { id: string }) {
           {eventError !== null ? (
             <p className="">{eventError}</p>
           ) : null}
-          <div className="w-screen max-w-[500px] flex flex-col px-4 mt-4">
+          <div className="w-screen max-w-[700px] flex flex-col px-4 mt-4">
             <p className="text-xl mb-2">
               Menu
             </p>
-            <table className="">
+            <table className="w-full">
               <thead className="">
                 <tr className="flex font-bold">
                   <td className="basis-1/6 border-b">Type</td>
@@ -265,10 +265,10 @@ export default function PotluckPage({ id }: { id: string }) {
                 ) : null}
               </tbody>
             </table>
-            <div className="mt-12 flex flex-col w-full items-center">
-              <p className="text-2xl mb-4 w-10/12">What are you bringing?</p>
-              <div className="flex flex-col items-center w-screen">
-                <div className="flex text-lg my-1 w-10/12">
+            <div className="mt-12 flex flex-col w-full items-center md:min-w-[600px]">
+              <p className="text-2xl mb-4">What are you bringing?</p>
+              <div className="flex flex-col items-center w-full px-2">
+                <div className="flex text-lg my-1 w-11/12">
                   <label className="w-3/12">Type</label>
                   <select className="rounded text-black w-9/12" value={newDishType} onChange={(e) => setNewDishType(e.target.value)}>
                     {dishTypes.map(type => {
@@ -276,11 +276,11 @@ export default function PotluckPage({ id }: { id: string }) {
                     })}
                   </select>
                 </div>
-                <div className="flex text-lg my-1 w-10/12">
+                <div className="flex text-lg my-1 w-11/12">
                   <label className="w-3/12">Dish</label>
                   <input value={newDishName} onChange={(e) => updateDishName(e.target.value)} className="rounded w-9/12 pl-2 text-black" />
                 </div>
-                <div className="flex text-lg my-1 w-10/12">
+                <div className="flex text-lg my-1 w-11/12">
                   <label className="w-3/12">Name</label>
                   <input value={newDishPerson} onChange={(e) => updateDishPerson(e.target.value)} className="rounded w-9/12 pl-2 text-black" />
                 </div>
