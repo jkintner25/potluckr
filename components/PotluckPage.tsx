@@ -7,7 +7,11 @@ import { useRouter } from "next/navigation";
 
 export default function PotluckPage({ id }: { id: string }) {
   const router = useRouter();
-  const [eventData, setEventData] = useState<Event | null>(null);
+  const [eventData, setEventData] = useState<Event>({
+    _id: '',
+    title: '',
+    datetime: ''
+  });
   const [eventError, setEventError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true)
   const [newDishType, setNewDishType] = useState<string>("Main");
@@ -19,17 +23,12 @@ export default function PotluckPage({ id }: { id: string }) {
 
   const getEvent = async () => {
     let response = await fetch(`api/${id}`);
-    let res = await response.json();
     if (response.ok) {
+      let res = await response.json();
       let { data } = res;
-      if (data !== null) {
-        setEventData(data)
-      } else {
-        router.push("/not-found")
-      }
+      setEventData(data)
     } else {
-      setEventError(res.error)
-      console.log(res)
+      router.push("/not-found")
     }
   };
 
@@ -76,6 +75,10 @@ export default function PotluckPage({ id }: { id: string }) {
     return errors;
   };
 
+  useEffect(()=>{
+    console.log(eventData)
+  }, [eventData])
+
   const submitNewDish = async () => {
     let myErrors = checkErrors();
     if (myErrors.length) {
@@ -83,7 +86,7 @@ export default function PotluckPage({ id }: { id: string }) {
       setDisabled(true)
       return;
     }
-    let dishType;
+    let dishType: string = '';
     if (newDishType === "Main") {
       dishType = "mains"
     } else if (newDishType === "Side") {
@@ -105,8 +108,17 @@ export default function PotluckPage({ id }: { id: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: newDish
     });
-    let data = await res.json();
-    if (res.ok) getEvent();
+    if (res.ok) {
+      // let {dish, name, type}: DishEntry = JSON.parse(newDish)
+      // if (type === 'mains') {
+        // let updatedEvent: Event = { ...eventData, [type]: [...eventData[type], { dish: dish, name: name }]};
+        // let updatedEvent = eventData
+        // updatedEvent.mains.push({ dish: dish, name: name })
+        // setEventData(updatedEvent)
+      // }
+      getEvent()
+      setNewDishName('')
+    };
   }
 
   const deleteDish = async (dish: DishEntry) => {
@@ -117,6 +129,22 @@ export default function PotluckPage({ id }: { id: string }) {
     });
     let data = await res.json();
     if (res.ok) getEvent();
+  }
+
+  const updateDishName = (value: string) => {
+    if (!newDishName.length && value === ' ') return;
+    if (value.length > 20) return;
+    else setNewDishName(value.replace(/\s{2,}/g, ' '))
+  }
+
+  const updateDishPerson = (value: string) => {
+    if (!newDishPerson.length && value === ' ') return;
+    if (value.length > 20) return;
+    else setNewDishPerson(value.replace(/\s{2,}/g, ' '))
+  }
+
+  const confirmDelete = (obj: { name: string, dish: string, type: string }) => {
+    deleteDish({ name: obj.name, dish: obj.dish, type: obj.type })
   }
 
   return (
@@ -156,24 +184,24 @@ export default function PotluckPage({ id }: { id: string }) {
               Menu
             </p>
             <table className="">
-              <thead className="border">
+              <thead className="">
                 <tr className="flex font-bold">
-                  <td className="basis-1/5 border-r">Type</td>
-                  <td className="basis-2/5 border-r">Dish</td>
-                  <td className="basis-2/5 border-r">Name</td>
-                  <td className="basis-1/6">Delete</td>
+                  <td className="basis-1/6 border-b">Type</td>
+                  <td className="basis-2/6 border-b">Dish</td>
+                  <td className="basis-2/6 border-b">Name</td>
+                  <td className="basis-1/6 border-b">Delete</td>
                 </tr>
               </thead>
               <tbody>
                 {eventData?.mains ? (
                   eventData.mains.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex border-r border-l border-b">
-                      <td className="basis-1/5 border-r">Main</td>
-                      <td className="basis-2/5 border-r">{obj.dish}</td>
-                      <td className="basis-2/5 border-r">{obj.name}</td>
-                      <td className="basis-1/6 flex justify-center">
+                    return <tr key={obj.name + obj.dish} className="flex my-1">
+                      <td className="basis-1/6 border-b">Main</td>
+                      <td className="basis-2/6 border-b">{obj.dish}</td>
+                      <td className="basis-2/6 border-b">{obj.name}</td>
+                      <td className="basis-1/6 border-b flex justify-center">
                         <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "mains" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "mains" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
                         </div>
                       </td>
                     </tr>
@@ -181,13 +209,13 @@ export default function PotluckPage({ id }: { id: string }) {
                 ) : null}
                 {eventData?.sides ? (
                   eventData.sides.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex border-r border-l border-b">
-                      <td className="basis-1/5 border-r">Side</td>
-                      <td className="basis-2/5 border-r">{obj.dish}</td>
-                      <td className="basis-2/5 border-r">{obj.name}</td>
-                      <td className="basis-1/6 flex justify-center">
+                    return <tr key={obj.name + obj.dish} className="flex my-1">
+                      <td className="basis-1/6 border-b">Side</td>
+                      <td className="basis-2/6 border-b">{obj.dish}</td>
+                      <td className="basis-2/6 border-b">{obj.name}</td>
+                      <td className="basis-1/6 border-b flex justify-center">
                         <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "sides" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "sides" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
                         </div>
                       </td>
                     </tr>
@@ -195,13 +223,13 @@ export default function PotluckPage({ id }: { id: string }) {
                 ) : null}
                 {eventData?.desserts ? (
                   eventData.desserts.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex border-r border-l border-b">
-                      <td className="basis-1/5 border-r">Dessert</td>
-                      <td className="basis-2/5 border-r">{obj.dish}</td>
-                      <td className="basis-2/5 border-r">{obj.name}</td>
-                      <td className="basis-1/6 flex justify-center">
+                    return <tr key={obj.name + obj.dish} className="flex my-1">
+                      <td className="basis-1/6 border-b">Dessert</td>
+                      <td className="basis-2/6 border-b">{obj.dish}</td>
+                      <td className="basis-2/6 border-b">{obj.name}</td>
+                      <td className="basis-1/6 border-b flex justify-center">
                         <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "desserts" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "desserts" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
                         </div>
                       </td>
                     </tr>
@@ -209,13 +237,13 @@ export default function PotluckPage({ id }: { id: string }) {
                 ) : null}
                 {eventData?.drinks ? (
                   eventData.drinks.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex border-r border-l border-b">
-                      <td className="basis-1/5 border-r">Drink</td>
-                      <td className="basis-2/5 border-r">{obj.dish}</td>
-                      <td className="basis-2/5 border-r">{obj.name}</td>
-                      <td className="basis-1/6 flex justify-center">
+                    return <tr key={obj.name + obj.dish} className="flex my-1">
+                      <td className="basis-1/6 border-b">Drink</td>
+                      <td className="basis-2/6 border-b">{obj.dish}</td>
+                      <td className="basis-2/6 border-b">{obj.name}</td>
+                      <td className="basis-1/6 border-b flex justify-center">
                         <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "drinks" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "drinks" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
                         </div>
                       </td>
                     </tr>
@@ -223,13 +251,13 @@ export default function PotluckPage({ id }: { id: string }) {
                 ) : null}
                 {eventData?.misc ? (
                   eventData.misc.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex border-r border-l border-b">
-                      <td className="basis-1/5 border-r">Other</td>
-                      <td className="basis-2/5 border-r">{obj.dish}</td>
-                      <td className="basis-2/5 border-r">{obj.name}</td>
-                      <td className="basis-1/6 flex justify-center">
+                    return <tr key={obj.name + obj.dish} className="flex my-1">
+                      <td className="basis-1/6 border-b">Other</td>
+                      <td className="basis-2/6 border-b">{obj.dish}</td>
+                      <td className="basis-2/6 border-b">{obj.name}</td>
+                      <td className="basis-1/6 border-b flex justify-center">
                         <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "misc" })} className="px-2 rounded text-black border border-stone-50 bg-stone-50">x</button>
+                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "misc" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
                         </div>
                       </td>
                     </tr>
@@ -239,22 +267,22 @@ export default function PotluckPage({ id }: { id: string }) {
             </table>
             <div className="mt-12 flex flex-col w-full items-center">
               <p className="text-2xl mb-4 w-10/12">What are you bringing?</p>
-              <div className="flex flex-col items-center w-full">
+              <div className="flex flex-col items-center w-screen">
                 <div className="flex text-lg my-1 w-10/12">
-                  <label className="w-2/12">Type</label>
-                  <select className="rounded text-black w-10/12" value={newDishType} onChange={(e) => setNewDishType(e.target.value)}>
+                  <label className="w-3/12">Type</label>
+                  <select className="rounded text-black w-9/12" value={newDishType} onChange={(e) => setNewDishType(e.target.value)}>
                     {dishTypes.map(type => {
                       return <option key={type} value={type} className="text-black">{type}</option>
                     })}
                   </select>
                 </div>
                 <div className="flex text-lg my-1 w-10/12">
-                  <label className="w-2/12">Dish</label>
-                  <input value={newDishName} onChange={(e) => setNewDishName(e.target.value)} className="rounded w-10/12 pl-2 text-black" />
+                  <label className="w-3/12">Dish</label>
+                  <input value={newDishName} onChange={(e) => updateDishName(e.target.value)} className="rounded w-9/12 pl-2 text-black" />
                 </div>
                 <div className="flex text-lg my-1 w-10/12">
-                  <label className="w-2/12">Name</label>
-                  <input value={newDishPerson} onChange={(e) => setNewDishPerson(e.target.value)} className="rounded w-10/12 pl-2 text-black" />
+                  <label className="w-3/12">Name</label>
+                  <input value={newDishPerson} onChange={(e) => updateDishPerson(e.target.value)} className="rounded w-9/12 pl-2 text-black" />
                 </div>
                 {formErrors.length ? (
                   <div className="w-full flex justify-center mt-2">
