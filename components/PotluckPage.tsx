@@ -157,14 +157,8 @@ export default function PotluckPage({ id }: { id: string }) {
         <>
           {eventData !== null ? (
             <>
-              <div className="w-full flex justify-center px-8 mb-6">
-                <div className={`flex rounded border border-stone-200 bg-stone-700 px-2 py-1 transition-opacity ease-out duration-500 ${loop ? 'opacity-60' : 'opacity-100'}`}>
-                  <p className="text-sm mr-4 text-red-500">Attention!!!</p>
-                  <p className="text-sm text-justify">The url is how you will access this event so make sure to copy it.</p>
-                </div>
-              </div>
               <p className="text-3xl mb-4">{eventData.title}</p>
-              <p className="text-sm">{dayjs(eventData.datetime).format('dddd D/M/YY h:mma')}</p>
+              <p className="text-sm">{dayjs(eventData.datetime).format('dddd M/D/YY h:mma')}</p>
               {eventData?.address ? (
                 <p className="text-sm md:text-md">Venue: <i>{eventData.address}</i></p>
               ) : null}
