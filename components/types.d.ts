@@ -1,4 +1,13 @@
 
+import type { DishTagKey } from './dishTags'
+
+export interface Dish {
+  id?: string;
+  name: string;
+  dish: string;
+  tags?: DishTagKey[];
+}
+
 export interface Event {
   _id: string;
   title: string;
@@ -6,30 +15,13 @@ export interface Event {
   theme?: string;
   address?: string;
   instructions?: string;
-  mains?: {
-    name: string;
-    dish: string;
-  }[];
-  sides?: {
-    name: string;
-    dish: string;
-  }[];
-  desserts?: {
-    name: string;
-    dish: string;
-  }[];
-  drinks?: {
-    name: string;
-    dish: string;
-  }[];
-  misc?: {
-    name: string;
-    dish: string;
-  }[];
+  mains?: Dish[];
+  sides?: Dish[];
+  desserts?: Dish[];
+  drinks?: Dish[];
+  misc?: Dish[];
 }
 
-export interface DishEntry {
+export interface DishEntry extends Dish {
   type: string;
-  dish: string;
-  name: string;
 };

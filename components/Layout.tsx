@@ -5,9 +5,9 @@ const Layout = ({ children }: {
   children: React.ReactNode
 }) => {
   return (
-    <div className="flex flex-col items-center text-white min-h-screen">
+    <div className="site-shell">
         <NavBar />
-        <div className="flex-grow">
+        <div className="site-main">
           {children}
         </div>
         <Footer />

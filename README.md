@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Database
+
+Create a `.env.local` file with `MONGODB_URI` set to your MongoDB Atlas driver connection string. The app uses the `PotluckrDB` database and `Events` collection. You can instead set `MONGO_DB_USER` and `MONGO_DB_PASSWORD` to use the cluster hostname configured in `app/mongoClient.ts`. Restart the server after changing environment variables. Keep credentials out of Git.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.

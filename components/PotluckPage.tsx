@@ -1,300 +1,292 @@
 'use client'
-import { useEffect, useState } from "react"
-import { Event, DishEntry } from "./types";
-import dayjs from "dayjs";
-import { dishTypes } from "./utils";
-import { useRouter } from "next/navigation";
+
+import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import dayjs from 'dayjs'
+import { Event as PotluckEvent, DishEntry } from './types'
+import { dishTags, DishTagKey } from './dishTags'
+
+const categories = [
+  { key: 'mains', label: 'Mains', option: 'Main', symbol: '🍲' },
+  { key: 'sides', label: 'Sides', option: 'Side', symbol: '🥗' },
+  { key: 'desserts', label: 'Desserts', option: 'Dessert', symbol: '🍰' },
+  { key: 'drinks', label: 'Drinks', option: 'Drink', symbol: '🥂' },
+  { key: 'misc', label: 'Other', option: 'Other', symbol: '✳' },
+] as const
+
+type Category = typeof categories[number]['key']
 
 export default function PotluckPage({ id }: { id: string }) {
-  const router = useRouter();
-  const [eventData, setEventData] = useState<Event>({
-    _id: '',
-    title: '',
-    datetime: ''
-  });
-  const [eventError, setEventError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true)
-  const [newDishType, setNewDishType] = useState<string>("Main");
-  const [newDishName, setNewDishName] = useState<string>("");
-  const [newDishPerson, setNewDishPerson] = useState<string>("");
-  const [formErrors, setFormErrors] = useState<string[]>([]);
-  const [disabled, setDisabled] = useState(false);
-  const [loop, setLoop] = useState(false);
+  const router = useRouter()
+  const [eventData, setEventData] = useState<PotluckEvent | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [newDishType, setNewDishType] = useState<Category>('mains')
+  const [newDishName, setNewDishName] = useState('')
+  const [newDishPerson, setNewDishPerson] = useState('')
+  const [newDishTags, setNewDishTags] = useState<DishTagKey[]>([])
+  const [signupStep, setSignupStep] = useState(0)
+  const [errors, setErrors] = useState<{ dish?: string; name?: string; submit?: string }>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [removing, setRemoving] = useState<string | null>(null)
 
-  const getEvent = async () => {
-    let response = await fetch(`api/${id}`);
-    if (response.ok) {
-      let res = await response.json();
-      let { data } = res;
-      setEventData(data)
-    } else {
-      router.push("/not-found")
-    }
-  };
-
-  useEffect(() => {
-    if (!loop) {
-      let timer = setTimeout(() => {
-        setLoop(!loop)
-      }, 6000);
-      return () => clearTimeout(timer)
-    } else {
-      let timer = setTimeout(() => {
-        setLoop(!loop)
-      }, 500);
-      return () => clearTimeout(timer)
-    }
-  }, [loop])
-
-  useEffect(() => {
-    setLoading(true)
-    getEvent();
-    let loaded = setTimeout(() => {
+  const getEvent = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/${id}`, { cache: 'no-store' })
+      if (response.status === 400 || response.status === 404) {
+        router.push('/not-found')
+        return
+      }
+      if (!response.ok) throw new Error('Event unavailable')
+      const result = await response.json()
+      setEventData(result.data)
+      setLoadError(null)
+    } catch {
+      setLoadError('Could not load the event. Please try again.')
+    } finally {
       setLoading(false)
-    }, 1500)
-    return () => clearTimeout(loaded)
-  }, [])
+    }
+  }, [id, router])
 
   useEffect(() => {
-    if (newDishName.length && formErrors.includes("Dish")) {
-      setFormErrors(prev => prev.filter(a => a != "Dish"));
-    }
-    if (newDishPerson.length && formErrors.includes("Name")) {
-      setFormErrors(prev => prev.filter(a => a != "Name"));
-    }
-  }, [newDishName, newDishPerson])
+    getEvent()
+    const interval = window.setInterval(getEvent, 15000)
+    return () => window.clearInterval(interval)
+  }, [getEvent])
 
-  useEffect(() => {
-    if (!formErrors.length) setDisabled(false)
-  }, [formErrors])
-
-  const checkErrors = () => {
-    let errors: string[] = [];
-    if (newDishName.length < 1) errors.push("Dish");
-    if (newDishPerson.length < 1) errors.push("Name");
-    return errors;
-  };
-
-  useEffect(()=>{
-    console.log(eventData)
-  }, [eventData])
-
-  const submitNewDish = async () => {
-    let myErrors = checkErrors();
-    if (myErrors.length) {
-      setFormErrors(myErrors)
-      setDisabled(true)
-      return;
+  async function submitNewDish(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (signupStep === 0) {
+      if (!newDishName.trim()) {
+        setErrors({ dish: 'Please enter a dish.' })
+        return
+      }
+      setErrors({})
+      setSignupStep(1)
+      return
     }
-    let dishType: string = '';
-    if (newDishType === "Main") {
-      dishType = "mains"
-    } else if (newDishType === "Side") {
-      dishType = "sides"
-    } else if (newDishType === "Dessert") {
-      dishType = "desserts"
-    } else if (newDishType === "Drink") {
-      dishType = "drinks"
-    } else if (newDishType === "Other") {
-      dishType = "misc"
+    if (signupStep === 1) {
+      setSignupStep(2)
+      return
     }
-    let newDish = JSON.stringify({
-      type: dishType,
-      dish: newDishName,
-      name: newDishPerson
-    });
-    let res = await fetch(`api/${id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: newDish
-    });
-    if (res.ok) {
-      // let {dish, name, type}: DishEntry = JSON.parse(newDish)
-      // if (type === 'mains') {
-        // let updatedEvent: Event = { ...eventData, [type]: [...eventData[type], { dish: dish, name: name }]};
-        // let updatedEvent = eventData
-        // updatedEvent.mains.push({ dish: dish, name: name })
-        // setEventData(updatedEvent)
-      // }
-      getEvent()
+    if (signupStep === 2) {
+      setSignupStep(3)
+      return
+    }
+    if (!newDishPerson.trim()) {
+      setErrors({ name: 'Please enter your name.' })
+      return
+    }
+    setErrors({})
+    setSubmitting(true)
+    try {
+      const response = await fetch(`/api/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: newDishType, dish: newDishName.trim(), name: newDishPerson.trim(), tags: newDishTags }),
+      })
+      if (!response.ok) throw new Error('Could not add dish')
+      const saved = await response.json()
+      if (!saved.dish) throw new Error('Missing saved dish')
+      setEventData(current => current
+        ? { ...current, [newDishType]: [...(current[newDishType] ?? []), saved.dish] }
+        : current
+      )
       setNewDishName('')
-    };
+      setNewDishPerson('')
+      setNewDishType('mains')
+      setNewDishTags([])
+      setSignupStep(0)
+    } catch {
+      setErrors({ submit: 'Could not add your dish. Please try again.' })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const deleteDish = async (dish: DishEntry) => {
-    let res = await fetch(`api/${id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dish)
-    });
-    let data = await res.json();
-    if (res.ok) getEvent();
+  function toggleTag(tag: DishTagKey) {
+    setNewDishTags(previous => previous.includes(tag) ? previous.filter(item => item !== tag) : [...previous, tag])
   }
 
-  const updateDishName = (value: string) => {
-    if (!newDishName.length && value === ' ') return;
-    if (value.length > 20) return;
-    else setNewDishName(value.replace(/\s{2,}/g, ' '))
+  async function deleteDish(dish: DishEntry) {
+    const key = dish.id ?? `${dish.type}-${dish.name}-${dish.dish}`
+    setRemoving(key)
+    setActionError(null)
+    try {
+      const response = await fetch(`/api/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dish),
+      })
+      if (!response.ok) throw new Error('Could not remove dish')
+      await getEvent()
+    } catch {
+      setActionError('Could not remove that dish. Please try again.')
+    } finally {
+      setRemoving(null)
+    }
   }
 
-  const updateDishPerson = (value: string) => {
-    if (!newDishPerson.length && value === ' ') return;
-    if (value.length > 20) return;
-    else setNewDishPerson(value.replace(/\s{2,}/g, ' '))
+  if (loading) {
+    return <main className="container"><div className="card loading-card" role="status">Setting the table...</div></main>
+  }
+  if (!eventData) {
+    return <main className="container"><div className="card loading-card" role="alert"><p>{loadError ?? 'Could not load the event.'}</p><button className="button button-secondary" type="button" onClick={getEvent}>Try again</button></div></main>
   }
 
-  const confirmDelete = (obj: { name: string, dish: string, type: string }) => {
-    deleteDish({ name: obj.name, dish: obj.dish, type: obj.type })
-  }
+  const dishCount = categories.reduce((total, category) => total + (eventData[category.key]?.length ?? 0), 0)
 
   return (
-    <div className="w-full flex flex-col items-center">
-      {loading ? (
-        <div className="w-screen h-[50vh] flex justify-center items-center">
-          <p className="text-4xl">LOADING...</p>
+    <main className="container event-page">
+      {loadError && <p className="field-error" role="alert">{loadError} Showing the last loaded menu.</p>}
+      <section className="card event-hero">
+        <span className="eyebrow">You&apos;re invited</span>
+        <h1 className="display">{eventData.title}</h1>
+        <div className="event-meta">
+          <span className="meta-pill"><span aria-hidden="true">◷</span> {dayjs(eventData.datetime).format('dddd, MMMM D · h:mm A')}</span>
+          {eventData.address && <span className="meta-pill"><span aria-hidden="true">⌖</span> {eventData.address}</span>}
+          {eventData.theme && <span className="meta-pill"><span aria-hidden="true">✳</span> {eventData.theme}</span>}
         </div>
-      ) : (
-        <>
-          {eventData !== null ? (
-            <>
-              <p className="text-3xl mb-4">{eventData.title}</p>
-              <p className="text-sm">{dayjs(eventData.datetime).format('dddd M/D/YY h:mma')}</p>
-              {eventData?.address ? (
-                <p className="text-sm md:text-md">Venue: <i>{eventData.address}</i></p>
-              ) : null}
-              {eventData?.theme ? (
-                <p className="text-sm md:text-md">Theme: <i>{eventData.theme}</i></p>
-              ) : null}
-              {eventData?.instructions ? (
-                <p className="text-sm md:text-md mt-4">*Instructions: <i>{eventData.instructions}</i></p>
-              ) : null}
-            </>
-          ) : null}
-          {eventError !== null ? (
-            <p className="">{eventError}</p>
-          ) : null}
-          <div className="w-screen max-w-[700px] flex flex-col px-4 mt-4">
-            <p className="text-xl mb-2">
-              Menu
-            </p>
-            <table className="w-full">
-              <thead className="">
-                <tr className="flex font-bold">
-                  <td className="basis-1/6 border-b">Type</td>
-                  <td className="basis-2/6 border-b">Dish</td>
-                  <td className="basis-2/6 border-b">Name</td>
-                  <td className="basis-1/6 border-b">Delete</td>
-                </tr>
-              </thead>
-              <tbody>
-                {eventData?.mains ? (
-                  eventData.mains.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex my-1">
-                      <td className="basis-1/6 border-b">Main</td>
-                      <td className="basis-2/6 border-b">{obj.dish}</td>
-                      <td className="basis-2/6 border-b">{obj.name}</td>
-                      <td className="basis-1/6 border-b flex justify-center">
-                        <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "mains" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
+        {eventData.instructions && <p className="event-instructions"><strong>A note from the host:</strong> {eventData.instructions}</p>}
+      </section>
+      <div className="event-content">
+        <section className="card menu-card">
+          <div className="card-header">
+            <div><h2>The menu</h2><p>See what everyone is bringing to the table.</p></div>
+            <span className="count-badge">{dishCount} {dishCount === 1 ? 'dish' : 'dishes'}</span>
+          </div>
+          {actionError && <p className="field-error" role="alert">{actionError}</p>}
+          {dishCount === 0 ? (
+            <div className="empty-menu"><span aria-hidden="true">🍽️</span><h3>There&apos;s room at the table.</h3><p>Be the first to add something delicious.</p></div>
+          ) : (
+            categories.map(category => {
+              const dishes = eventData[category.key]
+              if (!dishes?.length) return null
+              return (
+                <div className="menu-section" key={category.key}>
+                  <h3 className="menu-section-heading">{category.label}</h3>
+                  {dishes.map((dish, index) => {
+                    const key = dish.id ?? `${category.key}-${dish.name}-${dish.dish}`
+                    return (
+                      <div className="dish-row" key={dish.id ?? `${key}-${index}`}>
+                        <span className="dish-symbol" aria-hidden="true">{category.symbol}</span>
+                        <div className="dish-info">
+                          <div className="dish-title-line">
+                            <strong>{dish.dish}</strong>
+                            {dish.tags?.map(tagKey => {
+                              const tag = dishTags.find(item => item.key === tagKey)
+                              return tag ? <span className={`tag-badge tag-badge-${tag.group}`} key={tag.key} aria-label={tag.label} title={tag.label}>{tag.badge}</span> : null
+                            })}
+                          </div>
+                          <small>Brought by {dish.name}</small>
                         </div>
-                      </td>
-                    </tr>
-                  })
-                ) : null}
-                {eventData?.sides ? (
-                  eventData.sides.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex my-1">
-                      <td className="basis-1/6 border-b">Side</td>
-                      <td className="basis-2/6 border-b">{obj.dish}</td>
-                      <td className="basis-2/6 border-b">{obj.name}</td>
-                      <td className="basis-1/6 border-b flex justify-center">
-                        <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "sides" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
-                        </div>
-                      </td>
-                    </tr>
-                  })
-                ) : null}
-                {eventData?.desserts ? (
-                  eventData.desserts.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex my-1">
-                      <td className="basis-1/6 border-b">Dessert</td>
-                      <td className="basis-2/6 border-b">{obj.dish}</td>
-                      <td className="basis-2/6 border-b">{obj.name}</td>
-                      <td className="basis-1/6 border-b flex justify-center">
-                        <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "desserts" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
-                        </div>
-                      </td>
-                    </tr>
-                  })
-                ) : null}
-                {eventData?.drinks ? (
-                  eventData.drinks.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex my-1">
-                      <td className="basis-1/6 border-b">Drink</td>
-                      <td className="basis-2/6 border-b">{obj.dish}</td>
-                      <td className="basis-2/6 border-b">{obj.name}</td>
-                      <td className="basis-1/6 border-b flex justify-center">
-                        <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "drinks" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
-                        </div>
-                      </td>
-                    </tr>
-                  })
-                ) : null}
-                {eventData?.misc ? (
-                  eventData.misc.map((obj) => {
-                    return <tr key={obj.name + obj.dish} className="flex my-1">
-                      <td className="basis-1/6 border-b">Other</td>
-                      <td className="basis-2/6 border-b">{obj.dish}</td>
-                      <td className="basis-2/6 border-b">{obj.name}</td>
-                      <td className="basis-1/6 border-b flex justify-center">
-                        <div className="flex justify-center items-center">
-                          <button onClick={() => deleteDish({ name: obj.name, dish: obj.dish, type: "misc" })} className="px-2 rounded-lg text-black border border-stone-50 bg-stone-50">x</button>
-                        </div>
-                      </td>
-                    </tr>
-                  })
-                ) : null}
-              </tbody>
-            </table>
-            <div className="mt-12 flex flex-col w-full items-center md:min-w-[600px]">
-              <p className="text-2xl mb-4">What are you bringing?</p>
-              <div className="flex flex-col items-center w-full px-2">
-                <div className="flex text-lg my-1 w-11/12">
-                  <label className="w-3/12">Type</label>
-                  <select className="rounded text-black w-9/12" value={newDishType} onChange={(e) => setNewDishType(e.target.value)}>
-                    {dishTypes.map(type => {
-                      return <option key={type} value={type} className="text-black">{type}</option>
-                    })}
-                  </select>
+                        <button type="button" className="remove-button" onClick={() => deleteDish({ ...dish, type: category.key })} disabled={removing === key} aria-label={`Remove ${dish.dish} by ${dish.name}`} title="Remove dish">×</button>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="flex text-lg my-1 w-11/12">
-                  <label className="w-3/12">Dish</label>
-                  <input value={newDishName} onChange={(e) => updateDishName(e.target.value)} className="rounded w-9/12 pl-2 text-black" />
-                </div>
-                <div className="flex text-lg my-1 w-11/12">
-                  <label className="w-3/12">Name</label>
-                  <input value={newDishPerson} onChange={(e) => updateDishPerson(e.target.value)} className="rounded w-9/12 pl-2 text-black" />
-                </div>
-                {formErrors.length ? (
-                  <div className="w-full flex justify-center mt-2">
-                    <p className="text-yellow-400">
-                      <i>
-                        You need a {formErrors[0]}{formErrors.length > 1 ? ` and a ${formErrors[1]}!` : "!"}
-                      </i>
-                    </p>
-                  </div>
-                ) : null}
-                <div className="w-full flex justify-center">
-                  <button onClick={submitNewDish} className={`px-4 py-2 bg-white rounded-lg text-black border shadow-md disabled:opacity-50 ${disabled ? "mt-4" : "mt-12"}`} disabled={disabled}>Submit</button>
+              )
+            })
+          )}
+        </section>
+        <section className="card signup-card">
+          <span className="eyebrow">Pull up a chair</span>
+          <h2 style={{ marginTop: 10 }}>What are you bringing?</h2>
+          <p className="form-lede">A few quick steps and you&apos;re on the menu.</p>
+          <div className="signup-progress-label"><span>Step {signupStep + 1} of 4</span><span>{['Your dish', 'Category', 'Tags', 'Your name'][signupStep]}</span></div>
+          <div className="signup-progress" role="progressbar" aria-label="Add a dish progress" aria-valuemin={1} aria-valuemax={4} aria-valuenow={signupStep + 1}>
+            <span style={{ width: `${((signupStep + 1) / 4) * 100}%` }} />
+          </div>
+          <form className="signup-form" onSubmit={submitNewDish} noValidate>
+            {signupStep === 0 && (
+              <div className="field">
+                <label htmlFor="dish-name">What dish will you bring? <span>*</span></label>
+                <input id="dish-name" className="input" value={newDishName} maxLength={40} placeholder="e.g. Grandma's mac and cheese" onChange={e => { setNewDishName(e.target.value); setErrors(previous => ({ ...previous, dish: undefined, submit: undefined })) }} aria-invalid={!!errors.dish} aria-describedby={errors.dish ? 'dish-error' : undefined} />
+                {errors.dish && <span className="field-error" id="dish-error" role="alert">{errors.dish}</span>}
+              </div>
+            )}
+            {signupStep === 1 && (
+              <div className="field">
+                <p className="signup-field-label" id="category-label">Which part of the menu? <span>*</span></p>
+                <div className="category-options" role="group" aria-labelledby="category-label">
+                  {categories.map(category => (
+                    <button className="category-choice" type="button" aria-pressed={newDishType === category.key} key={category.key} onClick={() => setNewDishType(category.key)}>
+                      <span aria-hidden="true">{category.symbol}</span>{category.option}
+                    </button>
+                  ))}
                 </div>
               </div>
+            )}
+            {signupStep === 2 && (
+              <div className="field">
+                <p className="signup-field-label">Add any tags that apply <span className="muted">(optional)</span></p>
+                <p className="tag-step-hint">Choose all that apply. Guests will see these beside your dish.</p>
+                <p className="tag-group-label" id="allergen-tags-label">Contains</p>
+                <div className="tag-options" role="group" aria-labelledby="allergen-tags-label">
+                  {dishTags.filter(tag => tag.group === 'allergen').map(tag => (
+                    <button className="tag-option" type="button" key={tag.key} aria-pressed={newDishTags.includes(tag.key)} onClick={() => toggleTag(tag.key)}>
+                      <span className="tag-badge tag-badge-allergen" aria-hidden="true">{tag.badge}</span><span>{tag.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="tag-group-label" id="preparation-tags-label">Prepared as</p>
+                <div className="tag-options" role="group" aria-labelledby="preparation-tags-label">
+                  {dishTags.filter(tag => tag.group === 'preparation').map(tag => (
+                    <button className="tag-option" type="button" key={tag.key} aria-pressed={newDishTags.includes(tag.key)} onClick={() => toggleTag(tag.key)}>
+                      <span className="tag-badge tag-badge-preparation" aria-hidden="true">{tag.badge}</span><span>{tag.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {signupStep === 3 && (
+              <>
+                <div className="signup-summary">
+                  <span>You&apos;re bringing</span>
+                  <strong>{newDishName.trim()}</strong>
+                  <small>{categories.find(category => category.key === newDishType)?.option}</small>
+                  {newDishTags.length > 0 && <div className="dish-title-line">{newDishTags.map(tagKey => {
+                    const tag = dishTags.find(item => item.key === tagKey)
+                    return tag ? <span className={`tag-badge tag-badge-${tag.group}`} key={tag.key} title={tag.label}>{tag.badge}</span> : null
+                  })}</div>}
+                </div>
+                <div className="field">
+                  <label htmlFor="guest-name">What&apos;s your name? <span>*</span></label>
+                  <input id="guest-name" className="input" value={newDishPerson} maxLength={40} placeholder="e.g. Jordan" onChange={e => { setNewDishPerson(e.target.value); setErrors(previous => ({ ...previous, name: undefined, submit: undefined })) }} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'guest-name-error' : undefined} />
+                  {errors.name && <span className="field-error" id="guest-name-error" role="alert">{errors.name}</span>}
+                </div>
+              </>
+            )}
+            {errors.submit && <p className="field-error" role="alert">{errors.submit}</p>}
+            {signupStep === 2 && <button className="signup-skip" type="button" onClick={() => { setNewDishTags([]); setSignupStep(3) }}>Skip tags for now</button>}
+            <div className="signup-actions">
+              {signupStep > 0 && <button className="button button-secondary" type="button" onClick={() => { setErrors({}); setSignupStep(step => step - 1) }} disabled={submitting}>← Back</button>}
+              <button className="button button-primary" type="submit" disabled={submitting}>{submitting ? 'Adding...' : signupStep === 3 ? 'Add to the menu ↗' : 'Continue ↗'}</button>
             </div>
+          </form>
+        </section>
+      </div>
+      <section className="card tag-legend" aria-labelledby="tag-legend-title">
+        <div className="card-header">
+          <div><h2 id="tag-legend-title">Badge guide</h2><p>What the tags beside each dish mean.</p></div>
+        </div>
+        <div className="legend-groups">
+          <div>
+            <h3>Contains</h3>
+            <div className="legend-list">{dishTags.filter(tag => tag.group === 'allergen').map(tag => (
+              <div className="legend-item" key={tag.key}><span className="tag-badge tag-badge-allergen">{tag.badge}</span><span>{tag.description}</span></div>
+            ))}</div>
           </div>
-        </>
-      )}
-    </div>
+          <div>
+            <h3>Prepared as</h3>
+            <div className="legend-list">{dishTags.filter(tag => tag.group === 'preparation').map(tag => (
+              <div className="legend-item" key={tag.key}><span className="tag-badge tag-badge-preparation">{tag.badge}</span><span>{tag.description}</span></div>
+            ))}</div>
+          </div>
+        </div>
+        <p className="legend-note">Tags are supplied by guests. An untagged dish is not confirmed allergen-free; ask the cook about ingredients and cross-contact.</p>
+      </section>
+    </main>
   )
-};
+}
