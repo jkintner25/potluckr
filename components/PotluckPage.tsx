@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import dayjs from 'dayjs'
 import { Event as PotluckEvent, DishEntry } from './types'
 import { dishTags, DishTagKey } from './dishTags'
+import CrockpotIcon from './CrockpotIcon'
 
 const categories = [
   { key: 'mains', label: 'Mains', option: 'Main', symbol: '🍲' },
@@ -141,6 +142,7 @@ export default function PotluckPage({ id }: { id: string }) {
     <main className="container event-page">
       {loadError && <p className="field-error" role="alert">{loadError} Showing the last loaded menu.</p>}
       <section className="card event-hero">
+        <div className="event-hero-art" aria-hidden="true"><CrockpotIcon /></div>
         <span className="eyebrow">You&apos;re invited</span>
         <h1 className="display">{eventData.title}</h1>
         <div className="event-meta">

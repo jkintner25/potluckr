@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import CrockpotIcon from './CrockpotIcon'
 
 export default function Navbar() {
   const { id } = useParams()
@@ -34,7 +35,7 @@ export default function Navbar() {
     <header className="site-header">
       <nav className="container nav-inner" aria-label="Main navigation">
         <Link href="/" className="brand">
-          <span className="brand-mark" aria-hidden="true">✳</span>
+          <span className="brand-mark" aria-hidden="true"><CrockpotIcon /></span>
           <span>Potluckr<span style={{ color: 'var(--accent)' }}>.</span></span>
         </Link>
         <div className="nav-actions">
